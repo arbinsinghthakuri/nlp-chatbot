@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NLP Chatbot — Kyungdong University</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0D1B2A;
+    --teal: #0E8A7C;
+    --teal-lt: #1AB8A8;
+    --white: #F4F6F8;
+    --gray: #64748B;
+    --dark: #1E293B;
+    --accent: #F59E0B;
+    --card: #162233;
+    --border: #1E3A4A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(14,138,124,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(14,138,124,0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,27,42,0.9);
+    backdrop-filter: blur(10px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: var(--teal);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  .logo-text { font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; }
+  .logo-text span { color: var(--teal-lt); }
+
+  .header-info {
+    font-size: 11px;
+    color: var(--gray);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 60px 40px 40px;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: rgba(14,138,124,0.15);
+    border: 1px solid var(--teal);
+    color: var(--teal-lt);
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 2px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 7vw, 80px);
+    font-weight: 700;
+    line-height: 1.1;
+    animation: fadeUp 0.7s ease 0.1s both;
+  }
+
+  .hero h1 span { color: var(--teal-lt); }
+
+  .hero p {
+    margin-top: 16px;
+    color: #8899AA;
+    font-size: 16px;
+    max-width: 500px;
+    margin-inline: auto;
+    animation: fadeUp 0.7s ease 0.2s both;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* ── CHAT BOX ── */
+  .chat-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    animation: fadeUp 0.7s ease 0.3s both;
+  }
+
+  .chat-header {
+    background: var(--dark);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .chat-dots { display: flex; gap: 6px; }
+  .chat-dots span {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .chat-dots span:nth-child(1) { background: #FF5F57; }
+  .chat-dots span:nth-child(2) { background: #FEBC2E; }
+  .chat-dots span:nth-child(3) { background: #28C840; }
+
+  .chat-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--gray);
+    margin-left: 6px;
+  }
+
+  .status-dot {
+    margin-left: auto;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #28C840;
+    box-shadow: 0 0 6px #28C840;
+    animation: pulse 2s infinite;
+  }
+
+  .chat-messages {
+    height: 380px;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg {
+    display: flex;
+    gap: 10px;
+    animation: msgIn 0.3s ease both;
+  }
+
+  .msg.user { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .msg.bot .msg-avatar { background: var(--teal); }
+  .msg.user .msg-avatar { background: var(--dark); border: 1px solid var(--border); }
+
+  .msg-bubble {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+
+  .msg.bot .msg-bubble {
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+    color: #D0E0F0;
+  }
+
+  .msg.user .msg-bubble {
+    background: var(--teal);
+    border-top-right-radius: 4px;
+    color: white;
+  }
+
+  .typing {
+    display: flex; gap: 4px; align-items: center;
+    padding: 10px 14px;
+  }
+  .typing span {
+    width: 7px; height: 7px;
+    background: var(--teal-lt);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  .chat-input-area {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    background: var(--dark);
+  }
+
+  .chat-input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .chat-input:focus { border-color: var(--teal); }
+  .chat-input::placeholder { color: var(--gray); }
+
+  .send-btn {
+    background: var(--teal);
+    border: none;
+    border-radius: 10px;
+    width: 42px; height: 42px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, transform 0.1s;
+    font-size: 16px;
+  }
+
+  .send-btn:hover { background: var(--teal-lt); }
+  .send-btn:active { transform: scale(0.95); }
+
+  /* ── SIDEBAR ── */
+  .sidebar { display: flex; flex-direction: column; gap: 16px; animation: fadeUp 0.7s ease 0.4s both; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+
+  .card h3 {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 2px;
+    color: var(--teal-lt);
+    margin-bottom: 14px;
+  }
+
+  .suggestion-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: rgba(14,138,124,0.08);
+    border: 1px solid rgba(14,138,124,0.2);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #C0D8E8;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    margin-bottom: 7px;
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .suggestion-btn:hover {
+    background: rgba(14,138,124,0.2);
+    border-color: var(--teal);
+    color: white;
+    transform: translateX(3px);
+  }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .stat-item {
+    background: rgba(14,138,124,0.08);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--teal-lt);
+  }
+
+  .stat-label { font-size: 10px; color: var(--gray); margin-top: 3px; }
+
+  .tech-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+
+  .tag {
+    background: rgba(14,138,124,0.12);
+    border: 1px solid rgba(14,138,124,0.25);
+    color: var(--teal-lt);
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--gray);
+    font-size: 12px;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  @media (max-width: 700px) {
+    .main { grid-template-columns: 1fr; }
+    header { padding: 14px 20px; }
+    .hero { padding: 40px 20px 30px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🤖</div>
+    <div class="logo-text">NLP<span>BOT</span></div>
+  </div>
+  <div class="header-info">
+    Kyungdong University Global<br>
+    Department of Artificial Intelligence
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">TF-IDF + COSINE SIMILARITY</div>
+  <h1>NLP <span>Chatbot</span></h1>
+  <p>Ask anything about NLP, Machine Learning, Python, or AI.</p>
+</div>
+
+<div class="main">
+
+  <!-- CHAT -->
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="chat-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="chat-title">nlp_chatbot.py — running</div>
+      <div class="status-dot"></div>
+    </div>
+
+    <div class="chat-messages" id="messages">
+      <div class="msg bot">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">Hello! I'm an NLP chatbot built with TF-IDF and cosine similarity. Ask me about NLP, machine learning, Python, or AI!</div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <input class="chat-input" id="userInput" type="text" placeholder="Ask something... e.g. What is TF-IDF?" />
+      <button class="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="card">
+      <h3>TRY ASKING</h3>
+      <button class="suggestion-btn" onclick="ask('What is NLP?')">💬 What is NLP?</button>
+      <button class="suggestion-btn" onclick="ask('What is TF-IDF?')">📊 What is TF-IDF?</button>
+      <button class="suggestion-btn" onclick="ask('What is cosine similarity?')">📐 What is cosine similarity?</button>
+      <button class="suggestion-btn" onclick="ask('What is tokenization?')">✂️ What is tokenization?</button>
+      <button class="suggestion-btn" onclick="ask('What is machine learning?')">🧠 What is machine learning?</button>
+      <button class="suggestion-btn" onclick="ask('What is deep learning?')">🔬 What is deep learning?</button>
+      <button class="suggestion-btn" onclick="ask('What is lemmatization?')">📝 What is lemmatization?</button>
+      <button class="suggestion-btn" onclick="ask('What is Python?')">🐍 What is Python?</button>
+    </div>
+
+    <div class="card">
+      <h3>PROJECT STATS</h3>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-num">90+</div>
+          <div class="stat-label">Corpus Sentences</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">~85%</div>
+          <div class="stat-label">Response Rate</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">4</div>
+          <div class="stat-label">NLP Modules</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">6</div>
+          <div class="stat-label">Topic Domains</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>TECH STACK</h3>
+      <div class="tech-tags">
+        <span class="tag">Python</span>
+        <span class="tag">NLTK</span>
+        <span class="tag">scikit-learn</span>
+        <span class="tag">TF-IDF</span>
+        <span class="tag">Cosine Sim</span>
+        <span class="tag">Naive Bayes</span>
+        <span class="tag">NumPy</span>
+        <span class="tag">Colab</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  GC Samir (2517019) &nbsp;|&nbsp; Singh Thakuri Arbin (2517001) &nbsp;|&nbsp; Supervisor: Dr. Jebran Khan &nbsp;|&nbsp; AI Program — 3rd Semester
+</footer>
+
+<script>
+// ── KNOWLEDGE CORPUS ──
+const corpus = [
+  "Natural Language Processing (NLP) is a subfield of artificial intelligence that focuses on enabling computers to understand, interpret, and generate human language.",
+  "NLP combines computational linguistics with machine learning and deep learning to process and analyze large amounts of natural language data.",
+  "NLP is used in everyday applications like Google Search, Siri, Alexa, Gmail smart reply, and Google Translate.",
+  "The main goal of NLP is to bridge the gap between human communication and computer understanding.",
+  "NLP tasks include text classification, language translation, question answering, named entity recognition, and speech recognition.",
+  "Text preprocessing in NLP involves steps like tokenization, stopword removal, stemming, and lemmatization to clean raw text data.",
+  "Preprocessing is important because raw text contains noise like punctuation, capitalization, and irrelevant words that reduce model accuracy.",
+  "Tokenization is the process of splitting text into individual words or sentences, which is the first step in most NLP pipelines.",
+  "Word tokenization splits a sentence into individual words, for example the sentence I love NLP becomes the tokens I, love, NLP.",
+  "Sentence tokenization splits a paragraph into individual sentences using punctuation marks like periods and question marks.",
+  "NLTK provides the word_tokenize and sent_tokenize functions to perform tokenization easily in Python.",
+  "Lemmatization reduces words to their base or dictionary form using vocabulary and morphological analysis, for example running becomes run.",
+  "Lemmatization is more accurate than stemming because it uses a dictionary to find the correct base form of a word.",
+  "WordNetLemmatizer in NLTK is a popular tool used to perform lemmatization in Python NLP projects.",
+  "Stemming reduces words to their root form by removing suffixes, for example running and runner both become run using stemming.",
+  "Stemming is faster than lemmatization but less accurate because it just chops off word endings without checking a dictionary.",
+  "Stopwords are common words like the, is, and at that are often removed from text because they carry little useful information.",
+  "Removing stopwords reduces the size of the vocabulary and helps the model focus on the meaningful words in a sentence.",
+  "TF-IDF stands for Term Frequency-Inverse Document Frequency and is a numerical statistic used to reflect how important a word is to a document in a corpus.",
+  "Term Frequency measures how often a word appears in a document, while Inverse Document Frequency measures how rare the word is across all documents.",
+  "A word that appears in every document gets a low IDF score, meaning it is not useful for distinguishing between documents.",
+  "TF-IDF gives high scores to words that appear frequently in one document but rarely in others, making them strong identifiers.",
+  "TF-IDF is widely used in search engines, document ranking, and information retrieval systems.",
+  "The TfidfVectorizer in scikit-learn automatically computes TF-IDF scores and converts text into numerical vectors.",
+  "Cosine similarity measures the cosine of the angle between two vectors, and is commonly used to measure how similar two documents are regardless of their size.",
+  "If two documents have cosine similarity of 1.0 it means they are identical, and 0.0 means they share no common words.",
+  "Cosine similarity is preferred over Euclidean distance for text comparison because it is not affected by the length of the document.",
+  "In this chatbot, cosine similarity compares the user input vector with every sentence in the corpus to find the best match.",
+  "A retrieval-based chatbot does not generate new text but instead finds and returns the most relevant response from a predefined knowledge base.",
+  "Generative chatbots like ChatGPT generate new responses word by word using large language models trained on billions of sentences.",
+  "Retrieval-based chatbots are simpler, faster, and easier to control compared to generative models.",
+  "Machine learning is a subset of artificial intelligence that gives systems the ability to learn and improve from experience without being explicitly programmed.",
+  "Machine learning models learn patterns from training data and use those patterns to make predictions on new unseen data.",
+  "Common machine learning algorithms include linear regression, decision trees, random forests, support vector machines, and neural networks.",
+  "Supervised learning is a type of machine learning where the model is trained on labeled data with input-output pairs.",
+  "Unsupervised learning finds hidden patterns or structures in data without using labeled responses.",
+  "A neural network is a series of algorithms that attempt to recognize relationships in data through a process that mimics the way the human brain operates.",
+  "Deep learning is a subfield of machine learning that uses neural networks with many layers to learn representations of data with multiple levels of abstraction.",
+  "Deep learning has achieved state of the art results in image recognition, speech recognition, and natural language processing.",
+  "Python is a high-level programming language widely used in data science, artificial intelligence, and machine learning due to its simplicity and powerful libraries.",
+  "Popular Python libraries for machine learning and NLP include NumPy, Pandas, Scikit-learn, NLTK, TensorFlow, and PyTorch.",
+  "Google Colab is a free cloud-based Jupyter notebook environment that allows you to run Python code and machine learning experiments without any local setup.",
+  "NumPy is a Python library used for scientific computing and provides support for large multi-dimensional arrays and matrices.",
+  "A corpus in NLP is a large collection of texts used to train and evaluate natural language processing models.",
+  "Chatbots are computer programs designed to simulate conversation with human users, especially over the internet.",
+  "Artificial intelligence is the simulation of human intelligence processes by computer systems including learning, reasoning, and self-correction.",
+  "Word embeddings are dense vector representations of words that capture semantic meaning and relationships between words.",
+  "Naive Bayes is a probabilistic machine learning algorithm based on Bayes theorem and is commonly used for text classification tasks.",
+  "Sentiment analysis is the use of NLP to identify and extract subjective information from text such as opinions and emotions.",
+  "Named entity recognition is an NLP task that identifies and classifies named entities in text into categories like person, organization, and location.",
+  "Text summarization is the task of shortening a long document into a shorter version while preserving the key information and meaning.",
+  "Machine translation is the use of software to automatically translate text from one language to another, for example Google Translate.",
+  "Information retrieval is the activity of obtaining information from a collection of resources relevant to a query.",
+  "Scikit-learn is a popular Python machine learning library that provides tools for TF-IDF vectorization and cosine similarity computation.",
+  "NLTK stands for Natural Language Toolkit and is a leading platform for building Python programs that work with human language data.",
+];
+
+const greetings = ["hello","hi","hey","sup","yo","hiya","howdy","greetings","good morning","good evening","good afternoon"];
+const greetingResponses = [
+  "Hello! Ask me about NLP, machine learning, or AI! 😊",
+  "Hi there! What would you like to know about NLP or AI?",
+  "Hey! I can answer questions about machine learning, NLP, Python, and more!",
+];
+
+// Simple TF-IDF in JavaScript
+function tokenize(text) {
+  return text.toLowerCase().replace(/[^a-z0-9 ]/g, '').split(/\s+/).filter(w => w.length > 2);
+}
+
+const stopwords = new Set(['the','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','could','should','may','might','shall','can','need','dare','ought','used','this','that','these','those','and','but','or','nor','for','yet','so','in','on','at','to','for','of','by','from','with','about','into','through','during','before','after','above','below','between','each','more','also','than','then','when','where','which','who','what','how']);
+
+function getTokens(text) {
+  return tokenize(text).filter(w => !stopwords.has(w));
+}
+
+function cosineSim(vec1, vec2, vocab) {
+  let dot = 0, mag1 = 0, mag2 = 0;
+  for (const word of vocab) {
+    const v1 = vec1[word] || 0;
+    const v2 = vec2[word] || 0;
+    dot += v1 * v2;
+    mag1 += v1 * v1;
+    mag2 += v2 * v2;
+  }
+  if (mag1 === 0 || mag2 === 0) return 0;
+  return dot / (Math.sqrt(mag1) * Math.sqrt(mag2));
+}
+
+function buildTFIDF(sentences) {
+  const tokenizedDocs = sentences.map(getTokens);
+  const vocab = new Set(tokenizedDocs.flat());
+  const N = sentences.length;
+
+  // IDF
+  const idf = {};
+  for (const word of vocab) {
+    const df = tokenizedDocs.filter(doc => doc.includes(word)).length;
+    idf[word] = Math.log(N / (1 + df));
+  }
+
+  // TF-IDF vectors
+  const vectors = tokenizedDocs.map(tokens => {
+    const tf = {};
+    tokens.forEach(t => tf[t] = (tf[t] || 0) + 1);
+    const vec = {};
+    for (const word of vocab) {
+      vec[word] = ((tf[word] || 0) / (tokens.length || 1)) * idf[word];
+    }
+    return vec;
+  });
+
+  return { vectors, vocab: [...vocab], idf };
+}
+
+function getResponse(userInput) {
+  const lower = userInput.toLowerCase().trim();
+  if (greetings.some(g => lower === g || lower.startsWith(g + ' ') || lower.endsWith(' ' + g))) {
+    return greetingResponses[Math.floor(Math.random() * greetingResponses.length)];
+  }
+
+  const allSentences = [...corpus, userInput];
+  const { vectors, vocab, idf } = buildTFIDF(allSentences);
+  const userVec = vectors[vectors.length - 1];
+
+  let bestScore = 0, bestIdx = 0;
+  for (let i = 0; i < corpus.length; i++) {
+    const score = cosineSim(userVec, vectors[i], vocab);
+    if (score > bestScore) { bestScore = score; bestIdx = i; }
+  }
+
+  if (bestScore < 0.05) return "I'm not sure about that. Try asking about NLP, TF-IDF, cosine similarity, machine learning, Python, or tokenization.";
+  return corpus[bestIdx];
+}
+
+// ── CHAT UI ──
+function addMessage(text, role) {
+  const box = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `
+    <div class="msg-avatar">${role === 'bot' ? '🤖' : '👤'}</div>
+    <div class="msg-bubble">${text}</div>
+  `;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function showTyping() {
+  const box = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg bot'; div.id = 'typing';
+  div.innerHTML = `<div class="msg-avatar">🤖</div><div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addMessage(text, 'user');
+  showTyping();
+  setTimeout(() => {
+    removeTyping();
+    addMessage(getResponse(text), 'bot');
+  }, 700 + Math.random() * 500);
+}
+
+function ask(q) {
+  document.getElementById('userInput').value = q;
+  sendMessage();
+}
+
+document.getElementById('userInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+</script>
+</body>
+</html>
